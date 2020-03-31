@@ -14,9 +14,45 @@ done
 # Get wpi-source for yml parsing, noroot, errors etc
 source <(curl -s https://raw.githubusercontent.com/wpi-pw/template-workflow/master/wpi-source.sh)
 
+cur_args=()
+sync_args=(source destination flags)
+
+for i in "${!sync_args[@]}"; do
+  if [[ "${sync_args[$i]}" != "flags" ]]; then
+    # Get top keys from env config, local excluded
+    mapfile -t env_alias < <(wpi_yq "env" "top_keys")
+    # Make wp cli alias in wp-cli.yml from for env config
+    for a in "${!env_alias[@]}"
+    do
+      echo "[$((a+1))] ${env_alias[$a]}"
+    done
+
+    read -n 2 -ep "→ ${bold}Use available option from the list of ${sync_args[$i]}: " cur_a
+
+    cur_args+=(${env_alias[$((cur_a-1))]}) && clear
+  else
+
+    echo -e \
+    "Available sync flags:\n" \
+    "R - sync remote environments\n" \
+    "d - sync database\n" \
+    "l - sync languages\n" \
+    "m - sync must use plugins\n" \
+    "p - sync plugins\n" \
+    "t - sync themes\n" \
+    "u - sync uploads\n" \
+    "\nExample:\n" \
+    "du - sync for database and uploads directory\n" \
+
+    read -ep "→ ${bold}Use available option from the list of ${sync_args[$i]}: " cur_flags
+
+    cur_args+=($cur_flags) && clear
+  fi
+done
+
 # sync environments
-FROM=$1
-TO=$2
+FROM=${cur_args[0]}
+TO=${cur_args[1]}
 local=""
 # Source environment name
 app_user=$(wpi_yq env.$FROM.app_user)
@@ -35,7 +71,7 @@ app_protocol_sync=$(wpi_yq env.$TO.app_protocol)
 # sync flags
 sync_dirs=()
 cur_flags=$3
-wip_flag=${cur_flags//-}
+wip_flag=${cur_args[2]}
 sync_remote="false"
 # Vars with messages
 cur_flags_message="❌  Current flags not available"

@@ -102,7 +102,7 @@ avail_check() {
     avail=$(wp option get home 2>&1)
   else
     # check remote environment connection
-    avail=$(wp "@$TO" option get home 2>&1)
+    avail=$(wp "@$cur_avail" option get home 2>&1)
   fi
   # message output
   if [[ $avail == *"Error"* ]]; then

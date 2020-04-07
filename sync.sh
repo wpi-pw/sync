@@ -164,10 +164,10 @@ for i in "${!sync_dirs[@]}"; do
   esac
   if [[ "$local" == "true" ]]; then
     # Local environment pull/push
-    rsync -avz -P --del $from_env $to_env
+    rsync -avz -P --del --exclude=node_modules $from_env $to_env
   elif [[ "$remote" == "true" && "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
     # Remote environments sync
-    ssh -o ForwardAgent=yes $from_ssh "rsync -aze 'ssh -o StrictHostKeyChecking=no' -P --del $from_env $to_env"
+    ssh -o ForwardAgent=yes $from_ssh "rsync -aze 'ssh -o StrictHostKeyChecking=no' -P --del --exclude=node_modules $from_env $to_env"
   fi
 done
 

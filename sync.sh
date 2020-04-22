@@ -14,6 +14,10 @@ done
 # Get wpi-source for yml parsing, noroot, errors etc
 source <(curl -s https://raw.githubusercontent.com/wpi-pw/template-workflow/master/wpi-source.sh)
 
+# text font weight
+bold=$(tput bold)
+normal=$(tput sgr0)
+
 cur_args=()
 sync_args=(source destination flags)
 

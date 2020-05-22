@@ -38,9 +38,11 @@ for i in "${!sync_args[@]}"; do
 
     echo -e \
     "Available sync flags:\n" \
-    "R - sync remote environments\n" \
-    "S - skip db connection checking\n" \
     "D - sync database with ignoring db connection checking\n" \
+    "P - sync single plugin\n" \
+    "R - sync remote environments\n" \
+    "T - sync single theme\n" \
+    "S - skip db connection checking\n" \
     "d - sync database with wp-cli\n" \
     "l - sync languages\n" \
     "m - sync must use plugins\n" \
@@ -100,9 +102,10 @@ for ((i=0; i<${#wip_flag}; i++)); do
   # Parse the flags and setup vars
   case "${wip_flag:$i:1}" in
     D)  skip_db="true" && sync_db="true" && read -r -p "$db_message" db_response;; # sync db without connection checking
-    P)  sync_dirs+=("plugins"); single_plugin="true";;                             # sync single plugin
+    P)  sync_dirs+=("plugins"); single_package="true";;                            # sync single plugin
     R)  sync_remote="remote" && read -r -p "$remote_message" response;;            # sync remote environments
     S)  skip_db="true";;                                                           # skip db connection checking
+    T)  sync_dirs+=("themes"); single_package="true";;                             # sync single theme
     d)  sync_db="true" && read -r -p "$db_message" db_response;;                   # sync database
     l)  sync_dirs+=("languages");;                                                 # sync languages
     m)  sync_dirs+=("mu-plugins");;                                                # sync must use plugins
@@ -174,20 +177,32 @@ for i in "${!sync_dirs[@]}"; do
   esac
 
   # Single sync for Plugins and Themes
-  if [[ -n "$single_plugin" ]]; then
-    # get plugins list
-    mapfile -t plugins < <( wpi_yq 'plugins.single.[*].name' )
-    for p in "${!plugins[@]}"
-    do
-      echo "[$((p+1))] ${plugins[$p]}"
-    done
-    read -n 2 -ep "→ ${bold}Choose $cur_type from the list for single sync: " cur_p
+  if [[ -n "$single_package" ]]; then
+    if [[ "$cur_type" == "plugins" ]]; then
+      # get plugins list
+      mapfile -t plugins < <( wpi_yq 'plugins.single.[*].name' )
+      for p in "${!plugins[@]}"
+      do
+        echo "[$((p+1))] ${plugins[$p]}"
+      done
+      read -n 2 -ep "→ ${bold}Choose from $cur_type list for single sync: " cur_p
 
-    # override default from/to path
-    from_env="$from_env${plugins[$((cur_p-1))]}/"
-    to_env="$to_env${plugins[$((cur_p-1))]}/"
+      # override default from/to path
+      from_env="$from_env${plugins[$((cur_p-1))]}/"
+      to_env="$to_env${plugins[$((cur_p-1))]}/"
+    else
+      # choose the theme
+      echo "[1] $( wpi_yq 'themes.parent.name' )"
+      echo "[2] $( wpi_yq 'themes.child.name' )"
+      read -n 1 -ep "→ ${bold}Choose from $cur_type list for single sync: " cur_p
+      theme_name=$( wpi_yq 'themes.parent.name' )
+      [[ "$cur_p" == "2" ]] && theme_name=$( wpi_yq 'themes.child.name' )
+
+      # override default from/to path
+      from_env="$from_env$theme_name/"
+      to_env="$to_env$theme_name/"
+    fi
   fi
-
 
   if [[ "$local" == "true" ]]; then
     # Local environment pull/push

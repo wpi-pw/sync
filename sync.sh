@@ -99,9 +99,10 @@ fi
 for ((i=0; i<${#wip_flag}; i++)); do
   # Parse the flags and setup vars
   case "${wip_flag:$i:1}" in
+    D)  skip_db="true" && sync_db="true" && read -r -p "$db_message" db_response;; # sync db without connection checking
+    P)  sync_dirs+=("plugins"); single_plugin="true";;                             # sync single plugin
     R)  sync_remote="remote" && read -r -p "$remote_message" response;;            # sync remote environments
     S)  skip_db="true";;                                                           # skip db connection checking
-    D)  skip_db="true" && sync_db="true" && read -r -p "$db_message" db_response;; # sync db without connection checking
     d)  sync_db="true" && read -r -p "$db_message" db_response;;                   # sync database
     l)  sync_dirs+=("languages");;                                                 # sync languages
     m)  sync_dirs+=("mu-plugins");;                                                # sync must use plugins
@@ -171,6 +172,23 @@ for i in "${!sync_dirs[@]}"; do
     $FROM-$TO-remote-true)     remote="true"; from_env="$from_env"; to_env="$to_env_def";;
     *)                         echo $cur_env_message && exit 1 ;;
   esac
+
+  # Single sync for Plugins and Themes
+  if [[ -n "$single_plugin" ]]; then
+    # get plugins list
+    mapfile -t plugins < <( wpi_yq 'plugins.single.[*].name' )
+    for p in "${!plugins[@]}"
+    do
+      echo "[$((p+1))] ${plugins[$p]}"
+    done
+    read -n 2 -ep "→ ${bold}Choose $cur_type from the list for single sync: " cur_p
+
+    # override default from/to path
+    from_env="$from_env${plugins[$((cur_p-1))]}/"
+    to_env="$to_env${plugins[$((cur_p-1))]}/"
+  fi
+
+
   if [[ "$local" == "true" ]]; then
     # Local environment pull/push
     rsync -avz -P --del --exclude=node_modules $from_env $to_env

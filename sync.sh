@@ -203,13 +203,15 @@ for i in "${!sync_dirs[@]}"; do
       to_env="$to_env$theme_name/"
     fi
   fi
+  
+  exlude_dirs="--exclude=node_modules --exclude=vendor --exclude=.git --exclude=.idea --exlude=.DS_Store"
 
   if [[ "$local" == "true" ]]; then
     # Local environment pull/push
-    rsync -avz -P --del --exclude=node_modules $from_env $to_env
+    rsync -avz -P --del $exlude_dirs $from_env $to_env
   elif [[ "$remote" == "true" && "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
     # Remote environments sync
-    ssh -o ForwardAgent=yes $from_ssh "rsync -aze 'ssh -o StrictHostKeyChecking=no' -P --del --exclude=node_modules $from_env $to_env"
+    ssh -o ForwardAgent=yes $from_ssh "rsync -aze 'ssh -o StrictHostKeyChecking=no' -P --del $exlude_dirs $from_env $to_env"
   fi
 done
 

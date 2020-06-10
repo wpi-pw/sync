@@ -204,7 +204,7 @@ for i in "${!sync_dirs[@]}"; do
     fi
   fi
   
-  exlude_dirs="--exclude=node_modules --exclude=vendor --exclude=.git --exclude=.idea --exlude=.DS_Store"
+  exlude_dirs="--exclude=node_modules --exclude=vendor --exclude=.git --exclude=.idea --exclude=.DS_Store"
 
   if [[ "$local" == "true" ]]; then
     # Local environment pull/push
